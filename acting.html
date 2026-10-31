@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en" data-page="acting" data-theme="midnight">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>On Acting · The Archive</title>
+<meta name="description" content="How the acting method works in LotMCraft: digestion, acting deeds, the acting cap, sanity and loss of control.">
+<script>(function(){var t;try{t=localStorage.getItem('archive-theme')}catch(e){}if(!t)t=matchMedia('(prefers-color-scheme: light)').matches?'parchment':'midnight';document.documentElement.setAttribute('data-theme',t)})();</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Homemade+Apple&family=IM+Fell+English+SC&family=IM+Fell+English:ital@0;1&family=Special+Elite&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="assets/emblems/fool.png">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<main id="main" tabindex="-1">
+  <div class="wrap">
+    <header class="page-intro">
+      <h1 class="engraved flicker">On Acting</h1>
+      <p>A potion is not drunk once. It is digested slowly, by living as the name on the bottle says you are.</p>
+      <svg class="divider" viewBox="0 0 420 24" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true"><path d="M0 12h168M252 12h168"/><path d="M168 12q11-11 22 0q-11 11-22 0zM252 12q-11-11-22 0q11 11 22 0z"/><path d="M210 2l10 10l-10 10l-10-10z" fill="currentColor" fill-opacity=".25"/><circle cx="210" cy="12" r="2.5" fill="currentColor"/></svg>
+    </header>
+
+    <div class="acting-layout">
+      <article class="essay">
+
+        <section id="digestion" aria-labelledby="h-digestion">
+          <h2 id="h-digestion" class="engraved"><span class="num">I.</span>Digestion</h2>
+          <p>Every Beyonder carries a <em>digestion</em> value from 0% to 100% for the potion they last drank. When it reaches 100%, the mod announces <em>“Digested the Potion”</em>. There are two ways to raise it.</p>
+          <p><strong>Acting deeds.</strong> Each pathway and Sequence has its own list of deeds, such as reading a written book as a Seer or killing in darkness as a Faceless. Performing a listed deed digests:</p>
+          <div class="formula">deed value × <span data-rule="scale">0.007</span> × your Sequence number × (digestion_rate ÷ 10)</div>
+          <p>The <code>digestion_rate</code> game rule defaults to <span data-rule="rate">15</span>, a multiplier of ×<span data-rule="rateMul">1.5</span>. Because the Sequence number is part of the product, a deed is worth nine times as much at Sequence 9 as the same deed at Sequence 1. Each pathway's Acting Methods page lists every deed with the digestion it gives under the default rules.</p>
+          <p><strong>Using abilities.</strong> If no deeds are registered for your pathway and Sequence (as with every Twilight Giant and Black Emperor Sequence, and with every Sequence 0), using your pathway's abilities digests the potion instead. Longer cooldowns and lower-Sequence abilities give more. When deeds <em>are</em> registered, using abilities does not digest the potion at all.</p>
+          <p>A Beyonder who has switched pathways digests at half the normal rate.</p>
+          <p class="src">Source: ActingHandler.java, EventActingTask.java, Ability.java, BeyonderData.digest</p>
+        </section>
+
+        <section id="deeds" aria-labelledby="h-deeds">
+          <h2 id="h-deeds" class="engraved"><span class="num">II.</span>Acting Deeds</h2>
+          <p>Each deed has its own cooldown. Repeating it before the cooldown ends gives nothing. The first time you perform a deed at a Sequence it is <em>unlocked</em>: the acting effect plays, and the deed counts toward restoring the acting cap (see III).</p>
+          <div class="table-scroll">
+            <table class="ledger" id="deeds-table">
+              <caption>Registered acting deeds per Sequence (— means none; the record is incomplete)</caption>
+              <thead><tr><th scope="col">Pathway</th><th scope="col">9</th><th scope="col">8</th><th scope="col">7</th><th scope="col">6</th><th scope="col">5</th><th scope="col">4</th><th scope="col">3</th><th scope="col">2</th><th scope="col">1</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <p class="src">Source: ActingTaskRegistry.java, ActingHelper.java</p>
+        </section>
+
+        <section id="cap" aria-labelledby="h-cap">
+          <h2 id="h-cap" class="engraved"><span class="num">III.</span>The Acting Cap</h2>
+          <p>Advancing without acting leaves a Beyonder hollow. Every time you advance a Sequence, your <strong>maximum spirituality and maximum sanity</strong> drop by <span data-rule="cap">15%</span>.</p>
+          <p>The first three <em>different</em> deeds you perform at the new Sequence restore <span data-rule="inc1">7%</span>, <span data-rule="inc2">5%</span> and <span data-rule="inc3">3%</span>. Together they cancel the penalty.</p>
+          <p>If you advance before finishing three deeds, the deeds you skipped at the old Sequence are recorded as <em>missed</em>. Performing one of them later still restores its share.</p>
+          <p><strong>Death resets acting.</strong> All unlocked deeds are forgotten, and the <span data-rule="cap">15%</span> penalty is applied again for your current Sequence. You restore it by performing that Sequence's deeds again.</p>
+          <p>The cap does not apply at Sequence 0, in Creative mode, or when the <code>applyNotActingPenalty</code> game rule is off.</p>
+          <p class="src">Source: ActingCapHelper.java, ActingHelper.onCopyPlayerData</p>
+        </section>
+
+        <section id="sanity" aria-labelledby="h-sanity">
+          <h2 id="h-sanity" class="engraved"><span class="num">IV.</span>Sanity</h2>
+          <p>Sanity runs from 100% down to 0%, and the acting cap lowers its maximum. It drains in three ordinary ways:</p>
+          <ul>
+            <li><strong>Exhaustion.</strong> Staying at or below 10% spirituality drains sanity after 5 seconds, and the drain grows until, after a full minute, you lose 10% every second.</li>
+            <li><strong>Wounds.</strong> At Sequences 9–5, staying below half health drains sanity. The drain is stronger below 30% and 10% health, and stronger again at Sequences 9–8.</li>
+            <li><strong>Overreaching.</strong> Casting an ability without enough spirituality costs sanity for the shortfall, at most 10% per cast.</li>
+          </ul>
+          <p>Abilities that attack the mind, and some revival passives, also take sanity. Sanity damage is multiplied by your Sequence's resistance:</p>
+          <div class="table-scroll">
+            <table class="ledger" id="mul-table">
+              <caption>Sanity damage multiplier by Sequence</caption>
+              <thead><tr><th scope="col">Sequence</th><th scope="col">Multiplier</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <p class="src">Source: SanityEventHandler.java, SanityComponent.java, BeyonderData.sanityDecreaseMultiplier</p>
+        </section>
+
+        <section id="loss" aria-labelledby="h-loss">
+          <h2 id="h-loss" class="engraved"><span class="num">V.</span>Losing Control</h2>
+          <p>Below 80% sanity the symptoms begin and grow worse with each threshold. A Beyonder's power also fades, scaling ability damage down from 64% sanity.</p>
+          <div class="table-scroll">
+            <table class="ledger">
+              <caption>Effects applied every second, by sanity</caption>
+              <thead><tr><th scope="col">Sanity</th><th scope="col">Symptoms</th><th scope="col">Power</th></tr></thead>
+              <tbody>
+                <tr><td>80–100%</td><td>None.</td><td>100%</td></tr>
+                <tr><td>50–79%</td><td>Weakness; occasional nausea.</td><td>100% (95% below 64%)</td></tr>
+                <tr><td>35–49%</td><td>Nausea, Weakness II, Slowness, flashes of darkness; occasional damage from losing control.</td><td>85%</td></tr>
+                <tr><td>20–34%</td><td>Stronger nausea and weakness, darkness, sudden blindness, hunger, random displacement; regular damage.</td><td>70%</td></tr>
+                <tr><td>5–19%</td><td>Blindness and darkness, items slip from your inventory, phantom sounds. A 3% chance <em>every second</em> of dying outright.</td><td>20%</td></tr>
+                <tr><td>0–4%</td><td>Wither, levitation, camera shaking, the <em>Losing Control</em> effect. A 20% chance every second of dying outright.</td><td>20%</td></tr>
+                <tr><td>0%</td><td>Death.</td><td>—</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="src">Source: SanityEventHandler.onLivingTick, getSanityMultiplier; BeyonderDataTickHandler</p>
+        </section>
+
+        <section id="advancement" aria-labelledby="h-adv">
+          <h2 id="h-adv" class="engraved"><span class="num">VI.</span>Advancement</h2>
+          <p>Drinking the next potion takes 5 seconds plus 3 seconds for each Sequence already passed. Whether you survive depends on your digestion and sanity. These are the rules on the mod's <code>main</code> branch:</p>
+          <ul>
+            <li>Below 20% sanity, or two or more Sequences above your own: certain loss of control.</li>
+            <li>Digestion of at least 95% and sanity of at least 80%: <strong>no risk</strong>.</li>
+            <li>Otherwise the base risk is 65% (digested but unstable), 60% (stable but undigested) or 30% (neither). On top of that, the digestion shortfall adds up to 50% and the sanity shortfall adds half its size.</li>
+            <li>A Beyonder who has switched pathways before adds 10%.</li>
+            <li>A <em>first</em> potion is safe only at Sequence 9. Sequences 8–7 carry an 85% base risk, deeper Sequences are certain death, and low sanity adds to all of them.</li>
+            <li>From Sequence 5 or deeper, you can cross to the next Sequence of another pathway in the same Divine Group without risk, but only once.</li>
+          </ul>
+          <form class="calc" id="calc" onsubmit="return false" aria-label="Advancement risk calculator">
+            <label for="c-dig">Digestion <span id="c-dig-v">100%</span><input id="c-dig" type="range" min="0" max="100" value="100"></label>
+            <label for="c-san">Sanity <span id="c-san-v">100%</span><input id="c-san" type="range" min="0" max="100" value="100"></label>
+            <label for="c-jump">Potion
+              <select id="c-jump">
+                <option value="1">The next Sequence</option>
+                <option value="2">Two Sequences ahead</option>
+              </select></label>
+            <output for="c-dig c-san c-jump" id="c-out" aria-live="polite"></output>
+          </form>
+          <p><em>Note:</em> the <code>hunger-games</code> branch, which these files were transcribed from, relaxes these rules for its game mode. It ignores digestion when advancing, and first potions down to Sequence 5 are safe.</p>
+          <p class="src">Source: AdvancementUtil.java (main and hunger-games branches)</p>
+        </section>
+
+      </article>
+
+      <aside class="vial-wrap" aria-label="Digestion progress">
+        <svg class="vial" viewBox="0 0 120 250" role="img" aria-labelledby="vial-title">
+          <title id="vial-title">A potion vial that fills as you read</title>
+          <defs>
+            <linearGradient id="liquidGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#e2533a"/>
+              <stop offset=".6" stop-color="#8e1219"/>
+              <stop offset="1" stop-color="#3d0a0d"/>
+            </linearGradient>
+            <clipPath id="vialClip"><path d="M44 40h32v34c22 10 34 34 34 66v70c0 18-12 30-30 30H40c-18 0-30-12-30-30v-70c0-32 12-56 34-66z"/></clipPath>
+          </defs>
+          <g clip-path="url(#vialClip)">
+            <rect id="vial-liquid" class="liquid" x="0" y="232" width="120" height="4"/>
+            <ellipse id="vial-surface" class="surface" cx="60" cy="232" rx="60" ry="3"/>
+            <circle class="bubble" cx="48" cy="225" r="2.5"/>
+            <circle class="bubble" cx="70" cy="228" r="1.8"/>
+            <circle class="bubble" cx="60" cy="230" r="2.2"/>
+          </g>
+          <path class="glass" d="M44 40h32v34c22 10 34 34 34 66v70c0 18-12 30-30 30H40c-18 0-30-12-30-30v-70c0-32 12-56 34-66z"/>
+          <path d="M22 140c2-22 10-38 26-48" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="3" stroke-linecap="round"/>
+          <rect x="40" y="22" width="40" height="20" rx="3" fill="#6f4a2a" stroke="#2a1a0d"/>
+          <path d="M38 22h44" stroke="#c9a45c" stroke-width="3" stroke-linecap="round"/>
+          <path d="M40 30q-14 6-10 22" fill="none" stroke="#c9a45c" stroke-width="1"/>
+          <rect x="26" y="150" width="68" height="38" fill="#e8d9b8" stroke="#5b4319" transform="rotate(-3 60 169)"/>
+          <text x="60" y="165" text-anchor="middle" font-family="IM Fell English SC, serif" font-size="11" fill="#2a1d14" transform="rotate(-3 60 169)">Potion</text>
+          <text x="60" y="179" text-anchor="middle" font-family="Special Elite, monospace" font-size="7" fill="#6b1a1a" transform="rotate(-3 60 169)">DIGESTION</text>
+        </svg>
+        <div class="vial-readout" aria-live="off">
+          <strong id="vial-pct">0%</strong>
+          <span class="vial-caption">digested by reading</span>
+          <div class="done" id="vial-done" hidden>Digested the Potion</div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</main>
+<script src="pathways.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
